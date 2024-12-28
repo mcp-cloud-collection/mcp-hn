@@ -77,7 +77,7 @@ def _format_comment_details(comment: Dict, depth: int = DEFAULT_COMMENT_DEPTH, n
         ]
     return output
 
-def get_top_stories(num_stories: int = DEFAULT_NUM_STORIES):
+def get_stories(story_type: str, num_stories: int = DEFAULT_NUM_STORIES):
     """
     Returns a list of dictionaries with the following details:
     {
@@ -87,56 +87,25 @@ def get_top_stories(num_stories: int = DEFAULT_NUM_STORIES):
         "author": str,
         "points": int (nullable),
     }
-    """
-    url = f"{BASE_API_URL}/search?tags=front_page&hitsPerPage={num_stories}"
-    response = requests.get(url)
-    response.raise_for_status()
-    return [_format_story_details(story) for story in response.json()["hits"]]
 
-def get_new_stories(num_stories: int = DEFAULT_NUM_STORIES):
+    Args:
+        story_type: One of "top", "new", "ask_hn", "show_hn"
+        num_stories: Number of stories to return
     """
-    Returns a list of dictionaries with the following details:
-    {
-        "id": int,
-        "title": str,
-        "url": str,
-        "author": str,
-        "points": int (nullable),
-    }
-    """
-    url = f"{BASE_API_URL}/search_by_date?tags=story&hitsPerPage={num_stories}"
-    response = requests.get(url)
-    response.raise_for_status()
-    return [_format_story_details(story) for story in response.json()["hits"]]
+    story_type = story_type.lower().strip()
+    if story_type not in ["top", "new", "ask_hn", "show_hn"]:
+        raise ValueError("story_type must be one of: top, new, ask_hn, show_hn")
 
-def get_show_hn_stories(num_stories: int = DEFAULT_NUM_STORIES):
-    """
-    Returns a list of dictionaries with the following details:
-    {
-        "id": int,
-        "title": str,
-        "url": str,
-        "author": str,
-        "points": int (nullable),
+    # Map story type to appropriate API parameters
+    api_params = {
+        "top": {"endpoint": "search", "tags": "front_page"},
+        "new": {"endpoint": "search_by_date", "tags": "story"},
+        "ask_hn": {"endpoint": "search", "tags": "ask_hn"},
+        "show_hn": {"endpoint": "search", "tags": "show_hn"}
     }
-    """
-    url = f"{BASE_API_URL}/search?tags=show_hn&hitsPerPage={num_stories}"
-    response = requests.get(url)
-    response.raise_for_status()
-    return [_format_story_details(story) for story in response.json()["hits"]]
 
-def get_ask_hn_stories(num_stories: int = DEFAULT_NUM_STORIES):
-    """
-    Returns a list of dictionaries with the following details:
-    {
-        "id": int,
-        "title": str,
-        "url": str,
-        "author": str,
-        "points": int (nullable),
-    }
-    """
-    url = f"{BASE_API_URL}/search?tags=ask_hn&hitsPerPage={num_stories}"
+    params = api_params[story_type]
+    url = f"{BASE_API_URL}/{params['endpoint']}?tags={params['tags']}&hitsPerPage={num_stories}"
     response = requests.get(url)
     response.raise_for_status()
     return [_format_story_details(story) for story in response.json()["hits"]]

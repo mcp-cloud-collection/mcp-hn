@@ -17,11 +17,15 @@ async def handle_list_tools() -> list[types.Tool]:
     """
     return [
         types.Tool(
-            name="get_top_stories",
-            description="Get the top stories from Hacker News",
+            name="get_stories",
+            description="Get stories from Hacker News. The options are `top`, `new`, `ask_hn`, `show_hn` for types of stories. This doesn't include the comments. Use `get_story_info` to get the comments.",
             inputSchema={
                 "type": "object",
                 "properties": {
+                    "story_type": {
+                        "type": "string",
+                        "description": "Type of stories to get, one of: `top`, `new`, `ask_hn`, `show_hn`",
+                    },
                     "num_stories": {
                         "type": "integer",
                         "description": "Number of stories to get",
@@ -29,45 +33,6 @@ async def handle_list_tools() -> list[types.Tool]:
                 },
             },
         ),
-        # types.Tool(
-        #     name="get_new_stories",
-        #     description="Get the new stories from Hacker News",
-        #     inputSchema={
-        #         "type": "object",
-        #         "properties": {
-        #             "num_stories": {
-        #                 "type": "integer",
-        #                 "description": f"Number of stories to get, defaults to {DEFAULT_NUM_STORIES}",
-        #             },
-        #         },
-        #     },
-        # ),
-        # types.Tool(
-        #     name="get_show_hn_stories",
-        #     description="Get the show Hacker News stories",
-        #     inputSchema={
-        #         "type": "object",
-        #         "properties": {
-        #             "num_stories": {
-        #                 "type": "integer",
-        #                 "description": f"Number of stories to get, defaults to {DEFAULT_NUM_STORIES}",
-        #             },
-        #         },
-        #     },
-        # ),
-        # types.Tool(
-        #     name="get_ask_hn_stories",
-        #     description="Get the ask Hacker News stories",
-        #     inputSchema={
-        #         "type": "object",
-        #         "properties": {
-        #             "num_stories": {
-        #                 "type": "integer",
-        #                 "description": f"Number of stories to get, defaults to {DEFAULT_NUM_STORIES}",
-        #             },
-        #         },
-        #     },
-        # ),
         types.Tool(
             name="get_user_info",
             description="Get user info from Hacker News",
@@ -88,7 +53,7 @@ async def handle_list_tools() -> list[types.Tool]:
         ),
         types.Tool(
             name="search_stories",
-            description="Search stories from Hacker News",
+            description="Search stories from Hacker News. It is generally recommended to use simpler queries to get a broader set of results. Very targetted queries may not return any results.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -115,7 +80,7 @@ async def handle_list_tools() -> list[types.Tool]:
                 "type": "object",
                 "properties": {
                     "story_id": {
-                        "type": "string",
+                        "type": "integer",
                         "description": "Story ID",
                     },
                 },
@@ -130,9 +95,10 @@ async def handle_call_tool(
     """
     Handle tool execution requests.
     """
-    if name == "get_top_stories":
+    if name == "get_stories":
+        story_type = arguments.get("story_type", "top")
         num_stories = arguments.get("num_stories", DEFAULT_NUM_STORIES)
-        output = hn.get_top_stories(num_stories)
+        output = hn.get_stories(story_type, num_stories)
         return [types.TextContent(type="text", text=json.dumps(output, indent=2))]
     elif name == "search_stories":
         query = arguments.get("query")
