@@ -35,7 +35,7 @@ async def handle_list_tools() -> list[types.Tool]:
         ),
         types.Tool(
             name="get_user_info",
-            description="Get user info from Hacker News",
+            description="Get user info from Hacker News, including the stories they've submitted",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -53,7 +53,7 @@ async def handle_list_tools() -> list[types.Tool]:
         ),
         types.Tool(
             name="search_stories",
-            description="Search stories from Hacker News. It is generally recommended to use simpler queries to get a broader set of results. Very targetted queries may not return any results.",
+            description="Search stories from Hacker News. It is generally recommended to use simpler queries to get a broader set of results (less than 5 words). Very targetted queries may not return any results.",
             inputSchema={
                 "type": "object",
                 "properties": {

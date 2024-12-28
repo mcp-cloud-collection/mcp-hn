@@ -4,19 +4,36 @@ from typing import List, Dict, Union, Any
 BASE_API_URL = "http://hn.algolia.com/api/v1"
 DEFAULT_NUM_STORIES = 10
 
-# TODO: Update this to be user configurable
+# TODO(maybe): Update this to be user/claude configurable
 DEFAULT_NUM_COMMENTS = 10
 DEFAULT_COMMENT_DEPTH = 2
 
 def _validate_comments_is_list_of_dicts(comments: List[Any]) -> bool:
     """
-    If the comments is a list of ints, we return False, since we need to get the story info to get the comments.
+    Validates if the comments list contains dictionaries or just IDs.
+
+    Args:
+        comments: List of comments to validate
+
+    Returns:
+        bool: False if comments contains IDs that need to be fetched, True if comments are already dictionaries
+
+    This is used to determine if we need to fetch the full story info to get comment details.
     """
     return not isinstance(comments[0], int)
 
 def _get_story_info(story_id: int) -> Dict:
     """
-    Returns a dictionary with the story info.
+    Fetches detailed information about a Hacker News story.
+
+    Args:
+        story_id: The ID of the story to fetch
+
+    Returns:
+        Dict: Raw story data from the HN API including title, author, points, url and comments
+
+    Raises:
+        requests.exceptions.RequestException: If the API request fails
     """
     url = f"{BASE_API_URL}/items/{story_id}"
     response = requests.get(url)
@@ -25,18 +42,25 @@ def _get_story_info(story_id: int) -> Dict:
 
 def _format_story_details(story: Union[Dict, int], basic: bool = True) -> Dict:
     """
-    Returns a dictionary with the following details:
-    {
-        "id": int,
-        "title": str,
-        "url": str,
-        "author": str,
-        "points": int (nullable),
-        "comments": List[Dict]
-    }
+    Formats a story's details into a standardized dictionary structure.
 
-    If basic is False, then the comments are formatted to a depth of 2.
-    Otherwise, we don't get the comments.
+    Args:
+        story: Either a story ID or dictionary containing story data
+        basic: If True, excludes comments. If False, includes formatted comments to depth of 2
+
+    Returns:
+        Dict with the following structure:
+        {
+            "id": int,          # Story ID
+            "title": str,       # Story title if present
+            "url": str,         # Story URL if present
+            "author": str,      # Author username
+            "points": int,      # Points (may be null)
+            "comments": list    # List of comment dicts (only if basic=False)
+        }
+
+    The function handles both raw story IDs and story dictionaries, fetching additional
+    data if needed. For non-basic requests, it ensures comments are properly formatted.
     """
     if isinstance(story, int):
         story = _get_story_info(story)
@@ -60,12 +84,23 @@ def _format_story_details(story: Union[Dict, int], basic: bool = True) -> Dict:
 
 def _format_comment_details(comment: Dict, depth: int = DEFAULT_COMMENT_DEPTH, num_comments: int = DEFAULT_NUM_COMMENTS) -> Dict:
     """
-    Returns a dictionary with the following details:
-    {
-        "author": str,
-        "text": str,
-        "children": List[Dict] # in the same format as the parent
-    }
+    Formats a comment and its replies into a standardized structure.
+
+    Args:
+        comment: Raw comment dictionary from the API
+        depth: How many levels of nested comments to include (default: 2)
+        num_comments: Maximum number of child comments to include per level (default: 10)
+
+    Returns:
+        Dict with the following structure:
+        {
+            "author": str,      # Comment author's username
+            "text": str,        # Comment text content
+            "comments": list    # List of nested comment dicts (only if depth > 1)
+        }
+
+    The function recursively formats nested comments up to the specified depth,
+    limiting the number of child comments at each level to num_comments.
     """
     output = {
         "author": comment["author"],
@@ -79,18 +114,29 @@ def _format_comment_details(comment: Dict, depth: int = DEFAULT_COMMENT_DEPTH, n
 
 def get_stories(story_type: str, num_stories: int = DEFAULT_NUM_STORIES):
     """
-    Returns a list of dictionaries with the following details:
-    {
-        "id": int,
-        "title": str,
-        "url": str,
-        "author": str,
-        "points": int (nullable),
-    }
+    Fetches and formats a list of Hacker News stories of the specified type.
 
     Args:
-        story_type: One of "top", "new", "ask_hn", "show_hn"
-        num_stories: Number of stories to return
+        story_type: Category of stories to fetch. Must be one of:
+                   - "top": Front page stories
+                   - "new": Most recent stories
+                   - "ask_hn": Ask HN posts
+                   - "show_hn": Show HN posts
+        num_stories: Number of stories to return (default: 10)
+
+    Returns:
+        List[Dict]: List of story dictionaries, each containing:
+        {
+            "id": int,          # Story ID
+            "title": str,       # Story title
+            "url": str,         # Story URL
+            "author": str,      # Author username
+            "points": int,      # Points (may be null)
+        }
+
+    Raises:
+        ValueError: If story_type is not one of the valid options
+        requests.exceptions.RequestException: If the API request fails
     """
     story_type = story_type.lower().strip()
     if story_type not in ["top", "new", "ask_hn", "show_hn"]:
@@ -112,16 +158,25 @@ def get_stories(story_type: str, num_stories: int = DEFAULT_NUM_STORIES):
 
 def search_stories(query: str, num_results: int = DEFAULT_NUM_STORIES, search_by_date: bool = False):
     """
-    Returns a list of dictionaries with the following details:
-    {
-        "id": int,
-        "title": str,
-        "url": str,
-        "author": str,
-        "points": int (nullable),
-    }
+    Searches Hacker News stories using a query string.
 
-    If search_by_date is True, then we search by date, otherwise, we use relevance, then points, then number of comments.
+    Args:
+        query: Search terms to find in stories
+        num_results: Number of results to return (default: 10)
+        search_by_date: If True, sorts by date. If False, sorts by relevance/points/comments (default: False)
+
+    Returns:
+        List[Dict]: List of matching story dictionaries, each containing:
+        {
+            "id": int,          # Story ID
+            "title": str,       # Story title
+            "url": str,         # Story URL
+            "author": str,      # Author username
+            "points": int,      # Points (may be null)
+        }
+
+    Raises:
+        requests.exceptions.RequestException: If the API request fails
     """
     if search_by_date:
         url = f"{BASE_API_URL}/search_by_date?query={query}&hitsPerPage={num_results}&tags=story"
@@ -134,26 +189,68 @@ def search_stories(query: str, num_results: int = DEFAULT_NUM_STORIES, search_by
 
 def get_story_info(story_id: int) -> Dict:
     """
-    Returns a dictionary with the following details:
-    {
-        "id": int,
-        "title": str,
-        "url": str (nullable),
-        "author": str,
-        "points": int (nullable),
-        "comments": List[Dict]
-    }
+    Fetches detailed information about a specific story including comments.
+
+    Args:
+        story_id: The ID of the story to fetch
+
+    Returns:
+        Dict containing full story details:
+        {
+            "id": int,          # Story ID
+            "title": str,       # Story title
+            "url": str,         # Story URL (may be null for text posts)
+            "author": str,      # Author username
+            "points": int,      # Points (may be null)
+            "comments": list    # Nested list of comment dictionaries
+        }
+
+    Raises:
+        requests.exceptions.RequestException: If the API request fails
     """
     story = _get_story_info(story_id)
     return _format_story_details(story, basic=False)
 
 def _get_user_stories(user_name: str, num_stories: int = DEFAULT_NUM_STORIES) -> List[Dict]:
+    """
+    Fetches stories submitted by a specific user.
+
+    Args:
+        user_name: Username whose stories to fetch
+        num_stories: Number of stories to return (default: 10)
+
+    Returns:
+        List[Dict]: List of story dictionaries authored by the user
+
+    Raises:
+        requests.exceptions.RequestException: If the API request fails
+    """
     url = f"{BASE_API_URL}/search?tags=author_{user_name},story&hitsPerPage={num_stories}"
     response = requests.get(url)
     response.raise_for_status()
     return [_format_story_details(story) for story in response.json()["hits"]]
 
 def get_user_info(user_name: str, num_stories: int = DEFAULT_NUM_STORIES) -> Dict:
+    """
+    Fetches information about a Hacker News user and their recent submissions.
+
+    Args:
+        user_name: Username to fetch information for
+        num_stories: Number of user's stories to include (default: 10)
+
+    Returns:
+        Dict containing user information and recent stories:
+        {
+            "id": str,          # Username
+            "created_at": str,  # Account creation timestamp
+            "karma": int,       # User's karma points
+            "about": str,       # User's about text (may be null)
+            "stories": list     # List of user's recent story dictionaries
+        }
+
+    Raises:
+        requests.exceptions.RequestException: If the API request fails
+    """
     url = f"{BASE_API_URL}/users/{user_name}"
     response = requests.get(url)
     response.raise_for_status()
