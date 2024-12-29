@@ -14,10 +14,23 @@ A Model Context Protocol (MCP) server that provides tools for fetching informati
 Use prompts like the following:
 
 ```
-- Get the top stories of today (will use `get_stories` tool`)
-- What does the details of the story today that talks about the future of AI (will use `get_story_info` tool` based on the results of the previous tool)
-- What has the user `pg` been up to? (will use `get_user_info` tool)
-- What does hackernews say about careers in AI? (will use `search_stories` tool)
+User: Get the top stories of today
+  Output: Uses `get_stories` tool and returns a story about AI
+User: What does the details of the story today that talks about the future of AI
+  Output: Uses `get_story_info` tool based on the results of the previous tool
+User: What has the user `pg` been up to?
+  Output: Uses `get_user_info` tool and returns a summary of the user's activity
+User: What does hackernews say about careers in AI?
+  Output: Uses `search_stories` tool and returns a summary of the comments
+```
+
+A more detailed example with the puppeteer MCP server:
+
+```
+User: What are the top stories of today?
+  Output: Uses `get_stories` tool and returns a story about AI
+User: Can you use the puppeteer tool to read the article about <AI> and also use the hackernews tool to view the comments and give me a summary of what the main comments are about the article?
+  Output: Uses puppeteer tool to read the article about AI and then uses the `get_story_info` hn tool to get the comments and returns a summary of the comments
 ```
 
 ## Quickstart
@@ -27,27 +40,10 @@ Use prompts like the following:
 Update the following:
 
 On MacOS: `~/Library/Application\ Support/Claude/claude_desktop_config.json`
+
 On Windows: `%APPDATA%/Claude/claude_desktop_config.json`
 
-With the following for development:
-
-```json
-{
-  "mcpServers": {
-    "mcp-hn": {
-      "command": "uv",
-      "args": [
-        "--directory",
-        "<dir_to>/mcp-hn",
-        "run",
-        "mcp-hn"
-      ]
-    }
-  }
-}
-```
-
-Or with the following for production:
+With the following for production:
 
 ```json
 {
@@ -59,6 +55,8 @@ Or with the following for production:
   }
 }
 ```
+
+
 
 
 
