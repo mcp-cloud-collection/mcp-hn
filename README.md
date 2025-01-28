@@ -1,5 +1,7 @@
 # Hacker News MCP Server
 
+[![smithery badge](https://smithery.ai/badge/mcp-hn)](https://smithery.ai/mcp-hn)
+
 A Model Context Protocol (MCP) server that provides tools for fetching information from Hacker News.
 
 ## Tools
@@ -34,6 +36,14 @@ User: Can you use the puppeteer tool to read the article about <AI> and also use
 ```
 
 ## Quickstart
+
+### Installing via Smithery
+
+To install Hacker News MCP Server for Claude Desktop automatically via [Smithery](https://smithery.ai/mcp-hn):
+
+```bash
+npx -y @smithery/cli install mcp-hn --client claude
+```
 
 ### Claude Desktop:
 
