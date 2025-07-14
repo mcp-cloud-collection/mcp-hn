@@ -4,6 +4,8 @@
 
 A Model Context Protocol (MCP) server that provides tools for fetching information from Hacker News.
 
+<a href="https://glama.ai/mcp/servers/e0rco8dfgt"><img width="380" height="200" src="https://glama.ai/mcp/servers/e0rco8dfgt/badge" alt="mcp-hn MCP server" /></a>
+
 ## Tools
 
 - `get_stories` Fetching (top, new, ask_hn, show_hn) stories
