@@ -5,7 +5,7 @@ RUN npm install -g mcp-proxy
 
 WORKDIR /app
 
-RUN uv install --no-cache mcp-hn
+RUN uv pip install --no-cache-dir mcp-hn
 
 # Create non-root user
 RUN groupadd -g 1001 appuser && useradd -u 1001 -g appuser appuser
