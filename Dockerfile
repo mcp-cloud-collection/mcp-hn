@@ -1,4 +1,4 @@
-FROM nikolaik/python-nodejs:python3.13-nodejs24-alpine
+FROM nikolaik/python-nodejs:python3.13-nodejs24-slim
 
 # Install mcp-proxy globally
 RUN npm install -g mcp-proxy
